@@ -157,16 +157,16 @@ class Server extends Router {
         }
         
         this.dispatchStream = async function(stream, headers) {
-            const route = await this.findRoute(headers[':method'], headers[':path'])
-            
-            route.activeRoute &&
-             await route.activeRoute.application(stream, headers, this.dataStore);
+            (async (route) => {
+                route.activeRoute &&
+                 await route.activeRoute.application(stream, headers, that.dataStore);
 
-            route.disabledRoute &&
-             this.disabledRouteHandler(async () => that.handleDisabledRoute(stream));
+                route.disabledRoute &&
+                 that.disabledRouteHandler(async () => that.handleDisabledRoute(stream));
             
-            (!route.activeRoute && !route.disabledRoute) &&
-             this.fileServer.serveFile(headers[':path'], stream);
+                (!route.activeRoute && !route.disabledRoute) &&
+                 that.fileServer.serveFile(headers[':path'], stream)
+            })(await that.findRoute(headers[':method'], headers[':path']))
         }
 
         this.server.on('error', e => that.errorHandler(e))
