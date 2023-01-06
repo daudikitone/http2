@@ -183,28 +183,26 @@ class Server extends Router {
     }
 
     farewellOnError(cb = undefined) {
-        function exitOnExecption(that, callback) {
-            process.on('uncaughtException', error => {
-                try {
-                    if (callback) {
-                        (callback.constructor.name === 'AsyncFunction')
-                         ? callback(error).then().catch(e => {throw e}) 
-                         : callback(error)
+        return ((that, callback, exceptions) => {
+            exceptions.forEach(exception => {
+                process.on(exception, (error) => {
+                    try {
+                        if (callback) {
+                            (callback.constructor.name === 'AsyncFunction')
+                             ? callback(error).then() : callback(error)
+                        }
+
+                        else that.errorHandler(error)
                     }
-                
-                    else that.errorHandler(error)
-                }
-            
-                catch (e) {
-                    console.log('Failed to execute callback on farewell')
-                    that.errorHandler(e)
-                }
+
+                    catch (e) {
+                        console.log('Failed to execute callback on farewell')
+                        that.errorHandler(e)
+                    }
+                })
             })
-
             return that
-        }
-
-        return exitOnExecption(this, cb)
+        })(this, cb, ['uncaughtException', 'unhandledRejection'])
     }
 
     listen(cb = undefined, config = {}) {
